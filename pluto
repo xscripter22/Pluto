@@ -1,11 +1,11 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Locks", "Ocean")
+local Window = Library.CreateLib("stand", "BloodTheme")
 
-local Tab = Window:NewTab("Lock")
+local Tab = Window:NewTab("dh")
 
 local Section = Tab:NewSection("Locks")
 
-Section:NewButton("shiver", "ButtonInfo", function()
+Section:NewButton("stands lock", "ButtonInfo", function()
     local hotkey = "t" -- toggle key
 local mouse = game.Players.LocalPlayer:GetMouse()
 
@@ -65,50 +65,756 @@ setreadonly(mt, true)
 getgenv().ValiantAimHacks.FOV = 50
 end)
 
-local Tab = Window:NewTab("antilocks")
+local Tab = Window:NewTab("antilock")
 
-local Section = Tab:NewSection("antilocks")
-
-Section:NewButton("underground", "ButtonInfo", function()
-    local Toggled = true
-local KeyCode = 'z'
-local hip = 2.80
-local val = -35
+local Section = Tab:NewSection("antilock")
 
 
-
-
-
-function AA()
-    local oldVelocity = game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity
-    game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(oldVelocity.X, val, oldVelocity.Z)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(oldVelocity.X, oldVelocity.Y, oldVelocity.Z)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(oldVelocity.X, val, oldVelocity.Z)
-    game.Players.LocalPlayer.Character.Humanoid.HipHeight = hip
-end
-
-game:GetService('UserInputService').InputBegan:Connect(function(Key)
-    if Key.KeyCode == Enum.KeyCode[KeyCode:upper()] and not game:GetService('UserInputService'):GetFocusedTextBox() then
-        if Toggled then
-            Toggled = false
-            game.Players.LocalPlayer.Character.Humanoid.HipHeight = hip
-
-        elseif not Toggled then
-            Toggled = true
-
-            while Toggled do
-                AA()
-                task.wait()
-            end
-        end
+Section:NewButton("Standviewer", "see locks", function()
+    --Credits to the scripter
+ 
+-- // Services
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+ 
+-- // Vars
+local Terrain = Workspace.Terrain
+local LocalPlayer = Players.LocalPlayer
+local Beams = {}
+ 
+local Colours = {
+    At = ColorSequence.new(Color3.new(1, 0, 0), Color3.new(1, 0, 0)),
+    Away = ColorSequence.new(Color3.new(0, 1, 0), Color3.new(0, 1, 0))
+}
+ 
+-- // Checks if the beam is hitting our character and can't go through walls
+local function IsBeamHit(Beam: Beam, MousePos: Vector3)
+    -- // Get our character
+    local Character = LocalPlayer.Character
+    local Attachment = Beam.Attachment1
+ 
+    -- // Workout the direction
+    local Origin = Beam.Attachment0.WorldPosition
+    local Direction = MousePos - Origin
+ 
+    -- // Fire the ray, making sure it hits something (should unless aiming at sky?)
+    local raycastParms = RaycastParams.new()
+    raycastParms.FilterDescendantsInstances = {Character, Workspace.CurrentCamera}
+    local RaycastResult = Workspace:Raycast(Origin, Direction * 2, raycastParms) -- // Multiplied by 2 as ray might fall too short
+    if (not RaycastResult) then
+        Beam.Color = Colours.Away
+        Attachment.WorldPosition = MousePos
+        return
     end
-end)
+ 
+    -- // Set the colour based upon if aiming at us or not
+    if (Character) then
+        Beam.Color = RaycastResult.Instance:IsDescendantOf(Character) and Colours.At or Colours.Away
+    end
+ 
+    -- // Set the position so the beam can't go through walls
+    Attachment.WorldPosition = RaycastResult.Position
+end
+ 
+-- // Creates a beam with the default properties
+local function CreateBeam(Character: Model)
+    -- // Create beam
+    local Beam = Instance.new("Beam", Character)
+ 
+    -- // Set important properties
+    Beam.Attachment0 = Character:WaitForChild("Head"):WaitForChild("FaceCenterAttachment")
+    Beam.Enabled = Character:FindFirstChild("GunScript", true) ~= nil
+ 
+    -- // Set visual properties
+    Beam.Width0 = 0.1
+    Beam.Width1 = 0.1
+ 
+    -- // Add to beam table so can modify all at once
+    table.insert(Beams, Beam)
+ 
+    -- // Return
+    return Beam
+end
+ 
+-- // Apply whenever we get a new character
+local function OnCharacter(Character: Model)
+    -- // Make sure character exists
+    if (not Character) then
+        return
+    end
+ 
+    -- // Wait for the MousePos
+    local MousePos = Character:WaitForChild("BodyEffects"):WaitForChild("MousePos")
+ 
+    -- // Create the beam
+    local Beam = CreateBeam(Character)
+ 
+    -- // Attachment for the mouse position
+    local Attachment = Instance.new("Attachment", Terrain)
+    Beam.Attachment1 = Attachment
+ 
+    -- // Constantly update when MousePos updates
+    IsBeamHit(Beam, MousePos.Value)
+    MousePos.Changed:Connect(function()
+        IsBeamHit(Beam, MousePos.Value)
+    end)
+ 
+    -- // See whenever they equip a gun
+    Character.DescendantAdded:Connect(function(Descendant)
+        -- // Check if it is a gun, set enabled
+        if (Descendant.Name == "GunScript") then
+            Beam.Enabled = true
+        end
+    end)
+ 
+    -- // See whenever they unequip a gun
+    Character.DescendantRemoving:Connect(function(Descendant)
+        -- // Check if it is a gun, set disabled
+        if (Descendant.Name == "GunScript") then
+            Beam.Enabled = false
+        end
+    end)
+end
+ 
+-- // Apply on each player
+local function OnPlayer(Player: Player)
+    OnCharacter(Player.Character)
+    Player.CharacterAdded:Connect(OnCharacter)
+end
+ 
+for _, v in ipairs(Players:GetPlayers()) do
+    OnPlayer(v)
+end
+ 
+-- // Redo for each new player
+Players.PlayerAdded:Connect(OnPlayer)
+
 end)
 
-Section:NewButton("Fatality", "ButtonInfo", function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/tailgater/Fatality/main/AntiLock"))()
+Section:NewButton("Runs.gg", "ButtonInfo", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/yahlol/runs.gg/main/runs-main'))()
 end)
 
 Section:NewKeybind("KeybindText", "KeybindInfo", Enum.KeyCode.V, function()
 	Library:ToggleUI()
 end)
+
+local Tab = Window:NewTab("hood customs")
+local Section = Tab:NewSection("hood customs")
+
+Section:NewButton("Flash", "key is c", function()
+    --[[
+███████╗██╗░░░░░░█████╗░░██████╗██╗░░██╗░██╗░░░░░░░██╗
+██╔════╝██║░░░░░██╔══██╗██╔════╝██║░░██║░██║░░██╗░░██║
+█████╗░░██║░░░░░███████║╚█████╗░███████║░╚██╗████╗██╔╝
+██╔══╝░░██║░░░░░██╔══██║░╚═══██╗██╔══██║░░████╔═████║░
+██║░░░░░███████╗██║░░██║██████╔╝██║░░██║░░╚██╔╝░╚██╔╝░
+╚═╝░░░░░╚══════╝╚═╝░░╚═╝╚═════╝░╚═╝░░╚═╝░░░╚═╝░░░╚═╝░░
+
+]]
+    getgenv().Key = Enum.KeyCode.C
+getgenv().Prediction = 0.1337
+    getgenv().Partz = "LowerTorso" -- LowerTorso, HumanoidRootPart,Head,UpperTorso
+
+    
+    	local Locking = false
+    local Draw = Drawing.new
+local Square = Drawing.new("Square")
+Square.Visible = false
+Square.Color = Color3.fromRGB(30, 168, 145)
+Square.Thickness = 20
+Square.Size = Vector2.new(20,20)
+Square.Filled = true
+
+    game:GetService("UserInputService").InputBegan:Connect(function(keygo,ok)
+           if (not ok) then
+           if (keygo.KeyCode == getgenv().Key) then
+               Locking = not Locking
+               if Locking then
+               Plr =  getClosestPlayerToCursor()
+elseif not Locking then
+        
+
+         
+end
+end
+end
+end)
+	function getClosestPlayerToCursor()
+		local closestPlayer
+		local shortestDistance = math.huge
+
+		for i, v in pairs(game.Players:GetPlayers()) do
+			if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character:FindFirstChild("LowerTorso") then
+				local pos =  game:GetService"Workspace".CurrentCamera:WorldToViewportPoint(v.Character.PrimaryPart.Position)
+				local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new( game.Players.LocalPlayer:GetMouse().X,  game.Players.LocalPlayer:GetMouse().Y)).magnitude
+				if magnitude < shortestDistance then
+					closestPlayer = v
+					shortestDistance = magnitude
+				end
+			end
+		end
+		return closestPlayer
+	end
+
+	local rawmetatable = getrawmetatable(game)
+	local old = rawmetatable.__namecall
+	setreadonly(rawmetatable, false)
+	rawmetatable.__namecall = newcclosure(function(...)
+		local args = {...}
+		if Locking and getnamecallmethod() == "FireServer" and args[2] == "GetMousePos" then
+			args[3] = Plr.Character[getgenv().Partz].Position+(Plr.Character[getgenv().Partz].Velocity*Prediction)
+			return old(unpack(args))
+		end
+		return old(...)
+	end)
+	
+	
+game.RunService.Stepped:Connect(function()
+    if Plr ~= nil and Locking then
+         local Vector, OnScreen = workspace.CurrentCamera:worldToViewportPoint(Plr.Character[getgenv().Partz].Position+(Plr.Character[getgenv().Partz].Velocity*Prediction))
+         if OnScreen then
+        Square.Visible = true
+        Square.Position = Vector2.new(Vector.X,Vector.Y)
+        end
+        elseif not Locking then
+            Square.Visible = false
+        end
+        
+    end)
+
+end)
+Section:NewButton("godmode", "unhittable", function()
+    loadstring(game:HttpGet('https://fourdevils.gq/hood-customs-god.lua')){}
+end)
+
+
+local Tab = Window:NewTab("aim train")
+local Section = Tab:NewSection("aim trainer")
+
+Section:NewButton("Angel lua", "best script for that game", function()
+    local repo = 'https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/'
+
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+
+local Window = Library:CreateWindow({
+    -- Set Center to true if you want the menu to appear in the center
+    -- Set AutoShow to true if you want the menu to appear when it is created
+    -- Position and Size are also valid options here
+    -- but you do not need to define them unless you are changing them :)
+
+    Title = 'Angel.lua',
+    Center = true, 
+    AutoShow = true,
+})
+
+-- You do not have to set your tabs & groups up this way, just a prefrence.
+local Tabs = {
+    -- Creates a new tab titled Main
+    Main = Window:AddTab('Target'), 
+    Visual = Window:AddTab('Visual'), 
+    ['UI Settings'] = Window:AddTab('UI Settings'),
+}
+
+-- Groupbox and Tabbox inherit the same functions
+-- except Tabboxes you have to call the functions on a tab (Tabbox:AddTab(name))
+local LeftGroupBox = Tabs.Main:AddLeftGroupbox('Target')
+local RightGroupBox = Tabs.Main:AddRightGroupbox('Target Settings')
+
+-- Tabboxes are a tiny bit different, but here's a basic example:
+--[[
+
+local TabBox = Tabs.Main:AddLeftTabbox() -- Add Tabbox on left side
+
+local Tab1 = TabBox:AddTab('Tab 1')
+local Tab2 = TabBox:AddTab('Tab 2')
+
+-- You can now call AddToggle, etc on the tabs you added to the Tabbox
+]]
+
+-- Groupbox:AddToggle
+-- Arguments: Index, Options
+
+
+LeftGroupBox:AddToggle('Showdot', {
+    Text = 'ShowBox',
+    Default = true, -- Default value (true / false)
+    Tooltip = '', -- Information shown when you hover over the toggle
+});
+
+
+LeftGroupBox:AddToggle('Target', {
+    Text = 'Target',
+    Default = true, -- Default value (true / false)
+    Tooltip = '', -- Information shown when you hover over the toggle
+})
+Toggles.Target:OnChanged(function()
+    -- here we get our toggle object & then get its value
+    getgenv().Target = Toggles.Target.Value
+end)
+
+-- This should print to the console: "My toggle state changed! New value: false"
+Toggles.Target:SetValue(false)
+
+LeftGroupBox:AddToggle('Airshot', {
+    Text = 'Airshot',
+    Default = true, -- Default value (true / false)
+    Tooltip = '', -- Information shown when you hover over the toggle
+})
+Toggles.Airshot:OnChanged(function()
+    -- here we get our toggle object & then get its value
+    getgenv().AirshotFunccc = Toggles.Airshot.Value
+end)
+
+-- This should print to the console: "My toggle state changed! New value: false"
+Toggles.Airshot:SetValue(false)
+
+
+LeftGroupBox:AddToggle('NotifMode', {
+    Text = 'Notification',
+    Default = true, -- Default value (true / false)
+})
+
+LeftGroupBox:AddToggle('ChatMode', {
+    Text = 'Chat Mode',
+    Default = true, -- Default value (true / false)
+    Tooltip = '', -- Information shown when you hover over the toggle
+})
+Toggles.ChatMode:OnChanged(function()
+    -- here we get our toggle object & then get its value
+    getgenv().ChatMode = Toggles.ChatMode.Value
+end)
+
+-- This should print to the console: "My toggle state changed! New value: false"
+Toggles.ChatMode:SetValue(false)
+
+
+
+Toggles.NotifMode:OnChanged(function()
+    getgenv().NotifMode = Toggles.NotifMode.Value
+end)
+
+-- This should print to the console: "My toggle state changed! New value: false"
+Toggles.NotifMode:SetValue(false)
+
+LeftGroupBox:AddToggle('AutoPred', {
+    Text = 'Ping Based',
+    Default = true, -- Default value (true / false)
+    Tooltip = '', -- Information shown when you hover over the toggle
+})
+Toggles.AutoPred:OnChanged(function()
+    -- here we get our toggle object & then get its value
+    getgenv().AutoPrediction = Toggles.AutoPred.Value
+end)
+
+-- This should print to the console: "My toggle state changed! New value: false"
+Toggles.AutoPred:SetValue(false)
+
+-- Groupbox:AddInput
+-- Arguments: Idx, Info
+LeftGroupBox:AddInput('Prediction', {
+    Default = '0.1229',
+    Numeric = false, -- true / false, only allows numbers
+    Finished = false, -- true / false, only calls callback when you press enter
+
+    Text = 'Prediction',
+    Tooltip = '', -- Information shown when you hover over the textbox
+
+    Placeholder = 'Enter New Pred Here', -- placeholder text when the box is empty
+    -- MaxLength is also an option which is the max length of the text
+})
+
+Options.Prediction:OnChanged(function()
+    getgenv().Prediction = Options.Prediction.Value
+end)
+
+Options.Prediction:SetValue(0.1229)
+
+-- Groupbox:AddDropdown
+-- Arguments: Idx, Info
+
+LeftGroupBox:AddDropdown('MyDropdown', {
+    Values = { 'Head', 'UpperTorso', 'HumanoidRootPart', 'RightFoot' },
+    Default = 1, -- number index of the value / string
+    Multi = false, -- true / false, allows multiple choices to be selected
+
+    Text = 'Hitpart',
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the textbox
+})
+
+Options.MyDropdown:OnChanged(function()
+    getgenv().Partz = Options.MyDropdown.Value
+end)
+
+Options.MyDropdown:SetValue('UpperTorso')
+
+
+RightGroupBox:AddDivider()
+
+-- // Target Settings -- //
+
+
+RightGroupBox:AddLabel('Hitbox Color'):AddColorPicker('ColorPicker', {
+    Default = Color3.new(0, 1, 0), -- Bright green
+    Title = 'Hitbox Color', -- Optional. Allows you to have a custom color picker title (when you open it)
+});
+
+
+RightGroupBox:AddSlider('MySlider', {
+    Text = 'Hitbox Transparency',
+
+    -- Text, Default, Min, Max, Rounding must be specified.
+    -- Rounding is the number of decimal places for precision.
+
+    -- Example:
+    -- Rounding 0 - 5
+    -- Rounding 1 - 5.1
+    -- Rounding 2 - 5.15
+    -- Rounding 3 - 5.155
+
+    Default = 0,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+
+    Compact = false, -- If set to true, then it will hide the label
+});
+
+Options.MySlider:SetValue(0.3)
+
+RightGroupBox:AddDivider()
+
+RightGroupBox:AddToggle('FOVToggle', {
+    Text = 'FOV',
+    Default = true, -- Default value (true / false)
+    Tooltip = '', -- Information shown when you hover over the toggle
+});
+
+RightGroupBox:AddToggle('FOVFilled', {
+    Text = 'FOV Filled',
+    Default = false, -- Default value (true / false)
+    Tooltip = '', -- Information shown when you hover over the toggle
+});
+
+RightGroupBox:AddSlider('FOV', {
+    Text = 'FOV Radius',
+
+    Default = 0,
+    Min = 0,
+    Max = 750,
+    Rounding = 0,
+
+    Compact = false, -- If set to true, then it will hide the label
+});
+
+Options.FOV:SetValue(280)
+
+RightGroupBox:AddSlider('Thickness', {
+    Text = 'FOV Thickness',
+
+    Default = 0,
+    Min = 0,
+    Max = 10,
+    Rounding = 1,
+
+    Compact = false, -- If set to true, then it will hide the label
+});
+
+Options.Thickness:SetValue(0)
+
+RightGroupBox:AddSlider('FOVTrans', {
+    Text = 'FOV Transparency',
+
+    -- Text, Default, Min, Max, Rounding must be specified.
+    -- Rounding is the number of decimal places for precision.
+
+    -- Example:
+    -- Rounding 0 - 5
+    -- Rounding 1 - 5.1
+    -- Rounding 2 - 5.15
+    -- Rounding 3 - 5.155
+
+    Default = 0.8,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+
+    Compact = false, -- If set to true, then it will hide the label
+});
+
+
+-- Library functions
+-- Sets the watermark visibility
+Library:SetWatermarkVisibility(true)
+
+-- Sets the watermark text
+Library:SetWatermark('Angel.lua')
+
+Library.KeybindFrame.Visible = true; -- todo: add a function for this
+
+Library:OnUnload(function()
+    print('Unloaded!')
+    Library.Unloaded = true
+end)
+
+-- UI Settings
+local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+
+-- I set NoUI so it does not show up in the keybinds menu
+MenuGroup:AddButton('Unload', function() Library:Unload() end)
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' }) 
+
+Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
+
+-- Addons:
+-- SaveManager (Allows you to have a configuration system)
+-- ThemeManager (Allows you to have a menu theme system)
+
+-- Hand the library over to our managers
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+-- Ignore keys that are used by ThemeManager. 
+-- (we dont want configs to save themes, do we?)
+SaveManager:IgnoreThemeSettings() 
+
+-- Adds our MenuKeybind to the ignore list 
+-- (do you want each config to have a different menu key? probably not.)
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' }) 
+
+-- use case for doing it this way: 
+-- a script hub could have themes in a global folder
+-- and game configs in a separate folder per game
+ThemeManager:SetFolder('MyScriptHub')
+SaveManager:SetFolder('MyScriptHub/specific-game')
+
+-- Builds our config menu on the right side of our tab
+SaveManager:BuildConfigSection(Tabs['UI Settings']) 
+
+-- Builds our theme menu (with plenty of built in themes) on the left side
+-- NOTE: you can also call ThemeManager:ApplyToGroupbox to add it to a specific groupbox
+ThemeManager:ApplyToTab(Tabs['UI Settings'])
+
+-- You can use the SaveManager:LoadAutoloadConfig() to load a config 
+-- which has been marked to be one that auto loads!
+
+--[[
+                          
+                                                                   
+▀███▀▀▀██████▀   ▀███▀███▄   ▀███▀███▀   ▀██▀▀███▀▀▀██▄▀███▀   ▀██▀
+  ██    ▀███       █   ███▄    █   ███▄  ▄█    ██   ▀██▄ ███   ▄█  
+  ██   █  ██       █   █ ███   █    ▀██▄█▀     ██   ▄██   ███ ▄█   
+  ██▀▀██  ██       █   █  ▀██▄ █      ███      ███████     ████    
+  ██   █  ██       █   █   ▀██▄█    ▄█▀▀██▄    ██           ██     
+  ██      ██▄     ▄█   █     ███   ▄█   ▀██▄   ██           ██     
+▄████▄     ▀██████▀▀ ▄███▄    ██ ▄██▄▄  ▄▄███▄████▄       ▄████▄   
+                                                                   
+                                                                   
+     
+
+]]
+-- Toggle
+    getgenv().ChatMode = false
+        getgenv().PartMode = true
+        getgenv().Key = Enum.KeyCode.Q
+    --
+    
+    --
+        _G.Types = {
+            Ball = Enum.PartType.Ball,
+            Block = Enum.PartType.Block, 
+            Cylinder = Enum.PartType.Cylinder
+        }
+        
+        --variables                 
+            local Tracer = Instance.new("Part", game.Workspace)
+        Tracer.Name = "gay"	
+        Tracer.Anchored = true		
+        Tracer.CanCollide = false
+        Tracer.Parent = game.Workspace	
+        Tracer.Shape = _G.Types.Block 
+        Tracer.Size = Vector3.new(7,7,7)
+        game:GetService("RunService").RenderStepped:Connect(function()
+        Tracer.Transparency = Options.MySlider.Value
+        Tracer.Color = Options.ColorPicker.Value
+        end)
+        --
+        local plr = game.Players.LocalPlayer
+    local mouse = plr:GetMouse()
+    local Runserv = game:GetService("RunService")
+    
+    circle = Drawing.new("Circle")
+    circle.Color = Color3.fromRGB(173,216,230)
+    circle.Thickness = 5
+    circle.NumSides = 732
+    circle.Transparency = 0.8
+    game:GetService("RunService").RenderStepped:Connect(function()
+    circle.Thickness = Options.Thickness.Value
+    circle.Radius = Options.FOV.Value
+    circle.Visible = Toggles.FOVToggle.Value
+    circle.Transparency = Options.FOVTrans.Value
+    circle.Filled = Toggles.FOVFilled.Value
+    end)
+    
+    Runserv.RenderStepped:Connect(function()
+        circle.Position = Vector2.new(mouse.X,mouse.Y+35)
+        if getgenv().AirshotFunccc == true then
+                if Plr ~= nil then else return; end
+                if Plr.Character.Humanoid.Jump == true and Plr.Character.Humanoid.FloorMaterial == Enum.Material.Air then
+                    getgenv().Partz = "RightFoot"
+                else
+                    Plr.Character:WaitForChild("Humanoid").StateChanged:Connect(function(old,new)
+                        if new == Enum.HumanoidStateType.Freefall then
+                        getgenv().Partz = "RightFoot"
+                        else
+                            getgenv().Partz = "HumanoidRootPart"
+                        end
+                    end)
+                end
+    end
+    end)
+        
+            local guimain = Instance.new("Folder", game.CoreGui)
+            local CC = game:GetService"Workspace".CurrentCamera
+        local LocalMouse = game.Players.LocalPlayer:GetMouse()
+            local Locking = false
+        
+            
+        --
+        if getgenv().valiansh == true then
+                            game.StarterGui:SetCore("SendNotification", {
+                       Title = "angel.lua",
+                       Text = "Already Loaded!",
+                       Duration = 5
+            
+                       })
+            return
+        end
+        
+        getgenv().valiansh = true
+        
+            local UserInputService = game:GetService("UserInputService")
+    
+        UserInputService.InputBegan:Connect(function(keygo,ok)
+               if (not ok) then
+               if (keygo.KeyCode == getgenv().Key) then
+                   if getgenv().Target == true then
+                   Locking = not Locking
+                   
+                   if Locking then
+                   Plr =  getClosestPlayerToCursor()
+                    if getgenv().ChatMode then
+            local A_1 = "Target: "..tostring(Plr.Character.Humanoid.DisplayName) local A_2 = "All" local Event = game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest Event:FireServer(A_1, A_2) 
+                end	
+                   if getgenv().NotifMode then
+                    game.StarterGui:SetCore("SendNotification", {
+            Title = "angel.lua";
+            Text = "Target: "..tostring(Plr.Character.Humanoid.DisplayName);
+        
+        })
+        end
+        elseif not Locking then
+             if getgenv().ChatMode then
+            local A_1 = "Unlocked!" local A_2 = "All" local Event = game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest Event:FireServer(A_1, A_2) 
+                end	
+            if getgenv().NotifMode then
+                            game.StarterGui:SetCore("SendNotification", {
+                       Title = "angel.lua",
+                       Text = "Unlocked",
+                       Duration = 5
+                   })
+               elseif getgenv().Target == false then
+                            game.StarterGui:SetCore("SendNotification", {
+                       Title = "angel.lua",
+                       Text = "Target left or died.",
+                       Duration = 5
+         
+                       })
+                   
+                   end
+                      
+     
+     end     end   
+    end
+    end
+    end)
+        
+        function getClosestPlayerToCursor()
+            local closestPlayer
+            local shortestDistance = circle.Radius
+    
+            for i, v in pairs(game.Players:GetPlayers()) do
+                if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character:FindFirstChild("LowerTorso") then
+                    local pos = CC:WorldToViewportPoint(v.Character.PrimaryPart.Position)
+                    local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(LocalMouse.X, LocalMouse.Y)).magnitude
+                    if magnitude < shortestDistance then
+                        closestPlayer = v
+                        shortestDistance = magnitude
+                    end
+                end
+            end
+            return closestPlayer
+        end
+    --
+    if getgenv().PartMode then
+        game:GetService"RunService".Stepped:connect(function()
+            if Locking and Plr.Character and Plr.Character:FindFirstChild("LowerTorso") then
+                Tracer.CFrame = CFrame.new(Plr.Character.LowerTorso.Position+(Plr.Character.LowerTorso.Velocity*Prediction))
+            else
+                Tracer.CFrame = CFrame.new(0, 9999, 0)
+            end
+        end)
+    end
+    
+        
+        
+        --
+        local rawmetatable = getrawmetatable(game)
+        local old = rawmetatable.__namecall
+        setreadonly(rawmetatable, false)
+        rawmetatable.__namecall = newcclosure(function(...)
+            local args = {...}
+            if Locking and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePos" then
+                args[3] = Plr.Character[getgenv().Partz].Position+(Plr.Character[getgenv().Partz].Velocity*Prediction)
+                return old(unpack(args))
+            end
+            return old(...)
+        end)
+    ---
+        while wait() do
+        if getgenv().AutoPrediction == true then
+            local pingvalue = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
+            local split = string.split(pingvalue,'(')
+            local ping = tonumber(split[1])
+            if ping < 130 then
+                getgenv().Prediction = 0.151
+            elseif ping < 125 then
+                getgenv().Prediction = 0.149
+            elseif ping < 110 then
+                getgenv().Prediction = 0.140
+            elseif ping < 105 then
+                getgenv().Prediction = 0.133
+            elseif ping < 90 then
+                getgenv().Prediction = 0.130
+            elseif ping < 80 then
+                getgenv().Prediction = 0.128
+            elseif ping < 70 then
+                getgenv().Prediction = 0.1230
+            elseif ping < 60 then
+                getgenv().Prediction = 0.1229
+            elseif ping < 50 then
+                getgenv().Prediction = 0.1225
+            elseif ping < 40 then
+                getgenv().Prediction = 0.1256
+            end
+        end
+        end
+
+end)
+
+local Tab = Window:NewTab("Credits")
+local Section = Tab:NewSection("Credits to luvssssss#9852")
+
+local Section = Tab:NewSection("Credits to shiver#4328")
